@@ -17,10 +17,12 @@ Choose an instance name and
 [[https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/][namespace]]
 for the app. In most cases, you can use the =default= namespace.
 
-#+begin_src shell :tangle install.sh
+#+begin_src shell :tangle install1.sh
 export APP_INSTANCE_NAME="superset-patchworks"
 export NAMESPACE=default
 #+end_src
+
+#+RESULTS:
 
 For the persistent disk provisioning of the Superset StatefulSets, you
 will need to:
@@ -34,20 +36,24 @@ will need to:
 - Set the persistent disk's size. The default disk size for Superset is
   "10Gi".
 
-#+begin_src shell :tangle install.sh
+#+begin_src shell :tangle install1.sh
 export DEFAULT_STORAGE_CLASS="standard" # provide your StorageClass name if not "standard"
 export SUPERSET_PERSISTENT_DISK_SIZE="10Gi"
 export DB_PERSISTENT_DISK_SIZE="10Gi"
 #+end_src
+
+#+RESULTS:
 
 (Optional) Expose the Service externally and configure Ingress:
 
 By default, the Service is not exposed externally. To enable this
 option, change the value to true.
 
-#+begin_src shell :tangle install.sh
-export PUBLIC_SERVICE_AND_INGRESS_ENABLED=false
+#+begin_src shell :tangle install1.sh
+export PUBLIC_SERVICE_AND_INGRESS_ENABLED=true
 #+end_src
+
+#+RESULTS:
 
 (Optional) Enable Stackdriver Metrics Exporter:
 
@@ -59,9 +65,11 @@ a non-GCP cluster, you cannot export metrics to Stackdriver.
 By default, the app does not export metrics to Stackdriver. To enable
 this option, change the value to =true=.
 
-#+begin_src shell :tangle install.sh
+#+begin_src shell :tangle install1.sh
 export METRICS_EXPORTER_ENABLED=false
 #+end_src
+
+#+RESULTS:
 
 Set up the image tag:
 
@@ -69,9 +77,11 @@ It is advised to use stable image reference which you can find on
 [[https://marketplace.gcr.io/google/Superset][Marketplace Container
 Registry]]. Example:
 
-#+begin_src shell :tangle install.sh
+#+begin_src shell :tangle install1.sh
 export TAG="2.1"
 #+end_src
+
+#+RESULTS:
 
 Alternatively you can use short tag which points to the latest image for
 selected version. > Warning: this tag is not stable and referenced image
@@ -81,9 +91,11 @@ might change over time.
 #export TAG="2.0"
 #+end_src
 
+#+RESULTS:
+
 Configure the container images:
 
-#+begin_src shell :tangle install.sh
+#+begin_src shell :tangle install1.sh
 export IMAGE_REGISTRY="marketplace.gcr.io/google"
 
 export IMAGE_SUPERSET="${IMAGE_REGISTRY}/superset"
@@ -97,18 +109,22 @@ export IMAGE_METRICS_EXPORTER="${IMAGE_REGISTRY}/superset/prometheus-to-sd:${TAG
 export IMAGE_STATSD="${IMAGE_REGISTRY}/superset/statsd-exporter:${TAG}"
 #+end_src
 
+#+RESULTS:
+
 Set or generate the passwords:
 
-#+begin_src shell :tangle install.sh
+#+begin_src shell :tangle install1.sh
 # Set password. Use your own passwords
-export SUPERSET_PASSWORD= "OvS087k2K%zEok$Q" #"$(cat /dev/urandom | LC_ALL=C tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | tr -d '\n' | base64)"
+export SUPERSET_PASSWORD='OvS087k2K%zEok$Q' #"$(cat /dev/urandom | LC_ALL=C tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | tr -d '\n' | base64)"
 
 # Set PostgreSQL superset user password
-export POSTGRESQL_DB_PASSWORD= "U0A*Cqd2znPkIGaO" #"$(cat /dev/urandom | LC_ALL=C tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | tr -d '\n' | base64)"
+export POSTGRESQL_DB_PASSWORD='U0A*Cqd2znPkIGaO' #"$(cat /dev/urandom | LC_ALL=C tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | tr -d '\n' | base64)"
 
 # Set redis-server password
-export REDIS_PASSWORD= "Hx&tiTZ4iz3D!HwI" #"$(cat /dev/urandom | LC_ALL=C tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | tr -d '\n' | base64)"
+export REDIS_PASSWORD='Hx&tiTZ4iz3D!HwI' #"$(cat /dev/urandom | LC_ALL=C tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1 | tr -d '\n' | base64)"
 #+end_src
+
+#+RESULTS:
 
 ** Create TLS certificate for Superset
 :PROPERTIES:
@@ -125,16 +141,20 @@ Note: You can skip this step if you have disabled external access.
 
    To create a new certificate, run the following command:
 
-#+begin_src shell :tangle install.sh
+#+begin_src shell :tangle install1.sh
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /tmp/tls.key -out /tmp/tls.crt -subj "/CN=Superset/O=Superset"
 #+end_src
 
+#+RESULTS:
+
 2. Set =TLS_CERTIFICATE_KEY= and =TLS_CERTIFICATE_CRT= variables:
 
-   #+begin_src shell :tangle install.sh
-   export TLS_CERTIFICATE_KEY="$(cat /tmp/tls.key | base64)"
-   export TLS_CERTIFICATE_CRT="$(cat /tmp/tls.crt | base64)"
+#+begin_src shell :tangle install1.sh
+export TLS_CERTIFICATE_KEY="$(cat /tmp/tls.key | base64)"
+export TLS_CERTIFICATE_CRT="$(cat /tmp/tls.crt | base64)"
    #+end_src
+
+   #+RESULTS:
 
 ** Create namespace in your Kubernetes cluster
 :PROPERTIES:
@@ -143,9 +163,11 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /tmp/tls.key -out /t
 If you use a different namespace than the =default=, run the command
 below to create a new namespace:
 
-#+begin_src shell :tangle install.sh
-kubectl create namespace "${NAMESPACE}"
+#+begin_src shell :tangle install1.sh
+#kubectl create namespace "${NAMESPACE}"
 #+end_src
+
+#+RESULTS:
 
 ** Expand the manifest template
 :PROPERTIES:
@@ -154,7 +176,7 @@ kubectl create namespace "${NAMESPACE}"
 Use =helm template= to expand the template. We recommend that you save
 the expanded manifest file for future updates to your app.
 
-#+begin_src shell :tangle install.sh
+#+begin_src shell :tangle install1.sh
 helm template "${APP_INSTANCE_NAME}" chart/superset \
   --namespace "${NAMESPACE}" \
   --set superset.image.repo="${IMAGE_SUPERSET}" \
@@ -182,7 +204,7 @@ helm template "${APP_INSTANCE_NAME}" chart/superset \
 :END:
 Use =kubectl= to apply the manifest to your Kubernetes cluster:
 
-#+begin_src shell :tangle install.sh
+#+begin_src shell :tangle install1.sh
 kubectl apply -f "${APP_INSTANCE_NAME}_manifest.yaml" --namespace "${NAMESPACE}"
 #+end_src
 
@@ -192,9 +214,12 @@ kubectl apply -f "${APP_INSTANCE_NAME}_manifest.yaml" --namespace "${NAMESPACE}"
 :END:
 To get the Cloud Console URL for your app, run the following command:
 
-#+begin_src shell :tangle install.sh
+#+begin_src shell :tangle install1.sh
 echo "https://console.cloud.google.com/kubernetes/application/${ZONE}/${CLUSTER}/${NAMESPACE}/${APP_INSTANCE_NAME}"
 #+end_src
+
+#+RESULTS:
+: https://console.cloud.google.com/kubernetes/application////
 
 To view the app, open the URL in your browser.
 
@@ -205,7 +230,7 @@ To view the app, open the URL in your browser.
 To get the external IP of your Superset webserver, use the following
 command:
 
-#+begin_src shell :tangle install.sh
+#+begin_src shell :tangle install1.sh
 SERVICE_IP=$(kubectl get ingress "${APP_INSTANCE_NAME}-superset-ingress" \
   --namespace "${NAMESPACE}" \
   --output jsonpath='{.status.loadBalancer.ingress[0].ip}')
